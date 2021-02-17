@@ -521,8 +521,13 @@ function addPages(docStartPG, startPG, endPG)
 			addedAPage = true;
 		}
 	
+		var bounds = [0,0,20,20];
+		var margins = theDoc.pages[i].marginPreferences;
+		if (fitMargin){
+			bounds = [margins.top, margins.left, docHeight-margins.bottom, docWidth-margins.right];
+		}
 		// Create a temporary text box to place graphic in (to use auto positioning and sizing)
-		var TB = theDoc.pages[i].textFrames.add({geometricBounds:[0,0,20,20]});
+		var TB = theDoc.pages[i].textFrames.add({geometricBounds:bounds});
 		//decrease the font size of the newly inserted box to 0 to avoid a very misleading "out of pasteboard" error
 		//background: if the default font size of the ID document (set by default character style or default paragraph style) causes the text box to overflow it gives you an error saying ("This value would cause one or more objects to leave the pasteboard."). This mainly manifests in pixel based documents as the text box is only 20x20 px large in those cases.
 		TB.texts.firstItem().pointSize=1;
@@ -585,7 +590,9 @@ function addPages(docStartPG, startPG, endPG)
 		}
 	
 		// Apply any rotation
-		theRect.rotationAngle = rotateValues[rotate];
+		if (rotateValues[rotate] != 0) {
+			theRect.rotationAngle = rotateValues[rotate];
+		}
 
 		// Fit to Page Option
 		if(fitPage)
@@ -601,20 +608,22 @@ function addPages(docStartPG, startPG, endPG)
 			}
 			else
 			{
-				// Change rectangle's size to the page size
-				theRect.geometricBounds = [0, 0, docHeight, docWidth];
-				//TG: change to fit to page with margins
-				var margins = theDoc.pages[i].marginPreferences
-				theRect.geometricBounds = [margins.top, margins.left, docHeight-margins.bottom, docWidth-margins.right];
-				tempObjStyle.anchoredObjectSettings.anchorXoffset = -margins.left;
-				// From documentation:
-				// When document.documentPreferences.facingPages = true,
-        		// "left" means inside and "right" means outside.
-				if ((theDoc.documentPreferences.facingPages = true) && (i % 2 == 1)) {
-					tempObjStyle.anchoredObjectSettings.anchorXoffset = -margins.right;
+				if (fitMargin){
+					//TG: change to fit to page with margins
+					theRect.geometricBounds = bounds;
+					tempObjStyle.anchoredObjectSettings.anchorXoffset = -margins.left;
+					// From documentation:
+					// When document.documentPreferences.facingPages = true,
+					// "left" means inside and "right" means outside.
+					if ((theDoc.documentPreferences.facingPages = true) && (i % 2 == 1)) {
+						tempObjStyle.anchoredObjectSettings.anchorXoffset = -margins.right;
+					}
+					tempObjStyle.anchoredObjectSettings.anchorYoffset = margins.top;	
+				} else {
+					// Change rectangle's size to the page size
+					theRect.geometricBounds = [0, 0, docHeight, docWidth];
 				}
-				tempObjStyle.anchoredObjectSettings.anchorYoffset = margins.top;
-ß			}
+			}
 		
 			// Fit the placed page according to selected options
 			if(keepProp)
