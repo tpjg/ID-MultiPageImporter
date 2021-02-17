@@ -60,6 +60,7 @@ var fitPage = 0;
 var keepProp = 0;
 var addBleed = 1;
 var fitMargin = 1; // Place within margins instead of fitting to page
+var paragraphStyleName = "Appendix header"; // Name of the style to apply to text preceding the placed pages
 var ignoreErrors = 0;
 var percX = 100;
 var percY = 100;
@@ -525,25 +526,28 @@ function addPages(docStartPG, startPG, endPG)
 		var margins = theDoc.pages[i].marginPreferences;
 		if (fitMargin){
 			bounds = [margins.top, margins.left, docHeight-margins.bottom, docWidth-margins.right];
-			// TG: add filename on first placement above the margin
+			// TG: add filename on first placement above the margin and start a new section
 			if (firstTime){
 				var myTextFrame = theDoc.pages[i].textFrames.add();
 				myTextFrame.geometricBounds = [margins.top-8, margins.left, margins.top, docWidth-margins.right];
 				myTextFrame.contents = decodeURI(theFile.name);
-				//Create a paragraph style named "myParagraphStyle" if 
+				//Create a paragraph style named decodeURI(theFile.name); if 
 				//no style by that name already exists.
 				try{
-					myParagraphStyle = theDoc.paragraphStyles.item("myParagraphStyle");
+					myParagraphStyle = theDoc.paragraphStyles.item(paragraphStyleName);
 					//If the paragraph style does not exist, trying to get its name will generate an error.
 					myName = myParagraphStyle.name;
 				}
 				catch (myError){
 					//The paragraph style did not exist, so create it.
-					myParagraphStyle = theDoc.paragraphStyles.add({name:"myParagraphStyle"});
+					myParagraphStyle = theDoc.paragraphStyles.add({name:paragraphStyleName});
 				}
 				//At this point, the variable myParagraphStyle contains a reference to a paragraph 
 				//style object, which you can now use to specify formatting.
 				myTextFrame.parentStory.texts.item(0).applyParagraphStyle(myParagraphStyle, true);			}
+				// Start new section
+				var newSection = theDoc.sections.add (theDoc.pages[i]);
+				newSection.marker = decodeURI(theFile.name);
 		}
 		// Create a temporary text box to place graphic in (to use auto positioning and sizing)
 		var TB = theDoc.pages[i].textFrames.add({geometricBounds:bounds});
