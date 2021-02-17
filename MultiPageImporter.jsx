@@ -59,6 +59,7 @@ var placeOnLayer = 0;
 var fitPage = 0;
 var keepProp = 0;
 var addBleed = 1;
+var fitMargin = 1; // Place within margins instead of fitting to page
 var ignoreErrors = 0;
 var percX = 100;
 var percY = 100;
@@ -265,6 +266,7 @@ if(dLog.show() == 1)
 	fitPage = dLog.fitPage.value;
 	keepProp = dLog.keepProp.value;
 	addBleed = dLog.addBleed.value;
+	fitMargin = dLog.fitMargin.value;
 	positionType = dLog.posDropDown.selection.index;
 }
 else
@@ -723,14 +725,18 @@ function makeDialog()
 	dLog.addBleed = dLog.pan2.add('checkbox', [10,55,160,75], "Bleed the Fit Page");
 	dLog.addBleed.value = addBleed;
 	dLog.addBleed.enabled = dLog.fitPage.value;
+
+	dLog.fitMargin = dLog.pan2.add('checkbox', [10,75,160,95], "Fit to margin");
+	dLog.fitMargin.value = fitMargin;
+	dLog.fitMargin.enabled = dLog.fitPage.value;
 	// END Fitting Section
 
 	// BEGIN Scaling section
-	dLog.pan2.add('statictext',  [10,80,200,95], "Scale of Imported Page:");
+	dLog.pan2.add('statictext',  [10,95,200,115], "Scale of Imported Page:");
 
 	// X%
-	dLog.pan2.add('statictext', [10,105,35,125], "X%:");
-	dLog.percX = dLog.pan2.add('edittext', [42,102,82,125], "100");
+	dLog.pan2.add('statictext', [10,115,35,135], "X%:");
+	dLog.percX = dLog.pan2.add('edittext', [42,112,82,135], "100");
 	dLog.percX.text = percX;
 	// Visibility depends on the Fit Page checkbox
 	dLog.percX.enabled = !dLog.fitPage.value;
@@ -738,8 +744,8 @@ function makeDialog()
 	dLog.percX.onChange = percXValidator;
 
 	// Y%
-	dLog.pan2.add('statictext', [87,105,112,125], "Y%:");
-	dLog.percY = dLog.pan2.add('edittext', [119,102,159,125], "100");
+	dLog.pan2.add('statictext', [87,115,112,135], "Y%:");
+	dLog.percY = dLog.pan2.add('edittext', [119,112,159,135], "100");
 	dLog.percY.text = percY;
 	// Visibility depends on the Fit Page checkbox
 	dLog.percY.enabled = !dLog.fitPage.value;
