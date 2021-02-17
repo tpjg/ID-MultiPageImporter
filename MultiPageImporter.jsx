@@ -601,7 +601,18 @@ function addPages(docStartPG, startPG, endPG)
 			{
 				// Change rectangle's size to the page size
 				theRect.geometricBounds = [0, 0, docHeight, docWidth];
-			}
+				//TG: change to fit to page with margins
+				var margins = theDoc.pages[i].marginPreferences
+				theRect.geometricBounds = [margins.top, margins.left, docHeight-margins.bottom, docWidth-margins.right];
+				tempObjStyle.anchoredObjectSettings.anchorXoffset = -margins.left;
+				// From documentation:
+				// When document.documentPreferences.facingPages = true,
+        		// "left" means inside and "right" means outside.
+				if ((theDoc.documentPreferences.facingPages = true) && (i % 2 == 1)) {
+					tempObjStyle.anchoredObjectSettings.anchorXoffset = -margins.right;
+				}
+				tempObjStyle.anchoredObjectSettings.anchorYoffset = margins.top;
+ß			}
 		
 			// Fit the placed page according to selected options
 			if(keepProp)
