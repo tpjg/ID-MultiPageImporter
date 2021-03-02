@@ -554,7 +554,7 @@ function addPages(docStartPG, startPG, endPG)
 				}
 				//At this point, the variable myParagraphStyle contains a reference to a paragraph 
 				//style object, which you can now use to specify formatting.
-				myTextFrame.parentStory.texts.item(0).applyParagraphStyle(myParagraphStyle, true);			}
+				myTextFrame.parentStory.texts.item(0).applyParagraphStyle(myParagraphStyle, true);
 				// Start new section
 				try {
 				var newSection = theDoc.sections.add (theDoc.pages.itemByName(String(i+1)));
@@ -564,6 +564,7 @@ function addPages(docStartPG, startPG, endPG)
 					alert(i);
 					throw(e);
 				}
+			}
 		}
 		// Create a temporary text box to place graphic in (to use auto positioning and sizing)
 		var TB = theDoc.pages.itemByName(String(i+1)).textFrames.add({geometricBounds:bounds});
