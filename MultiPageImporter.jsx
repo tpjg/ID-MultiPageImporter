@@ -531,7 +531,14 @@ function addPages(docStartPG, startPG, endPG)
 			// TG: add filename on first placement above the margin and start a new section
 			if (firstTime){
 				var myTextFrame = theDoc.pages.itemByName(String(i+1)).textFrames.add();
-				myTextFrame.geometricBounds = [margins.top-8, margins.left, margins.top, docWidth-margins.right];
+				// From documentation:
+				// When document.documentPreferences.facingPages = true,
+				// "left" means inside and "right" means outside.
+				if ((theDoc.documentPreferences.facingPages = true) && (i % 2 == 1)) {
+					myTextFrame.geometricBounds = [margins.top-8, margins.right, margins.top, docWidth-margins.left];
+				} else {
+					myTextFrame.geometricBounds = [margins.top-8, margins.left, margins.top, docWidth-margins.right];
+				}
 				myTextFrame.contents = decodeURI(theFile.name);
 				//Create a paragraph style named decodeURI(theFile.name); if 
 				//no style by that name already exists.
