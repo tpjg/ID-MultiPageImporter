@@ -503,6 +503,8 @@ function addPages(docStartPG, startPG, endPG)
 
 	for(i = docStartPG - 1, currentInputDocPg = startPG; currentInputDocPg <= endPG; currentInputDocPg++, i++)
 	{
+		// Since docs (especially if used in books) not necessarily have pages.index == pages.name,
+		// use pages.itemByName(String(i+1)) instead of pages[i].
 
 		if(placementINFO.kind == PDF_DOC)
 		{
@@ -523,12 +525,12 @@ function addPages(docStartPG, startPG, endPG)
 		}
 	
 		var bounds = [0,0,20,20];
-		var margins = theDoc.pages[i].marginPreferences;
+		var margins = theDoc.pages.itemByName(String(i+1)).marginPreferences;
 		if (fitMargin){
 			bounds = [margins.top, margins.left, docHeight-margins.bottom, docWidth-margins.right];
 			// TG: add filename on first placement above the margin and start a new section
 			if (firstTime){
-				var myTextFrame = theDoc.pages[i].textFrames.add();
+				var myTextFrame = theDoc.pages.itemByName(String(i+1)).textFrames.add();
 				myTextFrame.geometricBounds = [margins.top-8, margins.left, margins.top, docWidth-margins.right];
 				myTextFrame.contents = decodeURI(theFile.name);
 				//Create a paragraph style named decodeURI(theFile.name); if 
@@ -546,11 +548,17 @@ function addPages(docStartPG, startPG, endPG)
 				//style object, which you can now use to specify formatting.
 				myTextFrame.parentStory.texts.item(0).applyParagraphStyle(myParagraphStyle, true);			}
 				// Start new section
-				var newSection = theDoc.sections.add (theDoc.pages[i]);
+				try {
+				var newSection = theDoc.sections.add (theDoc.pages.itemByName(String(i+1)));
 				newSection.marker = decodeURI(theFile.name);
+				} catch(e) {
+					alert(e);
+					alert(i);
+					throw(e);
+				}
 		}
 		// Create a temporary text box to place graphic in (to use auto positioning and sizing)
-		var TB = theDoc.pages[i].textFrames.add({geometricBounds:bounds});
+		var TB = theDoc.pages.itemByName(String(i+1)).textFrames.add({geometricBounds:bounds});
 		//decrease the font size of the newly inserted box to 0 to avoid a very misleading "out of pasteboard" error
 		//background: if the default font size of the ID document (set by default character style or default paragraph style) causes the text box to overflow it gives you an error saying ("This value would cause one or more objects to leave the pasteboard."). This mainly manifests in pixel based documents as the text box is only 20x20 px large in those cases.
 		TB.texts.firstItem().pointSize=1;
@@ -577,7 +585,7 @@ function addPages(docStartPG, startPG, endPG)
 				// If a page was added, nuke it, it's a dupe of the first page
 				if(addedAPage)
 				{
-					theDoc.pages[i].remove();
+					theDoc.pages.itemByName(String(i+1)).remove();
 				}
 				else
 				{
