@@ -229,6 +229,7 @@ else
 
 var currentLayer = theDoc.activeLayer;
 var docPgCount = theDoc.pages.length;
+var lastPageNumber = Number(theDoc.pages[docPgCount-1].name);
 
 // Get and display the dialog
 dLog = makeDialog();
@@ -517,7 +518,7 @@ function addPages(docStartPG, startPG, endPG)
 			app.importedPageAttributes.pageNumber = currentInputDocPg;
 		}
 
-		if(i > zeroBasedDocPgCnt)
+		if(i > (lastPageNumber-1))
 		{
 			// Make sure we have a page to insert into
 			theDoc.pages.add(LocationOptions.AT_END);
@@ -1579,7 +1580,7 @@ function endPGValidator()
 // Validate the document start page
 function docStartPGValidator()
 {
-	pageValidator(dLog.docStartPG, docPgCount, "Start Placing on Doc Page");
+	pageValidator(dLog.docStartPG, lastPageNumber, "Start Placing on Doc Page");
 }
 
 // Actual page validator
@@ -1819,7 +1820,7 @@ function mapPGValidator()
 {
 	if(dLog.mapPages.value)
 	{
-		if((Number(dLog.endPG.text)-Number(dLog.startPG.text))+1 > docPgCount)
+		if((Number(dLog.endPG.text)-Number(dLog.startPG.text))+1 > lastPageNumber)
 		{
 			alert("Mapping is not available: There are not enough document pages to place the PDFs in the selected page range " +
 			       "onto their own document pages. Either reduce the number of PDF pages in the range or increase the " + 
