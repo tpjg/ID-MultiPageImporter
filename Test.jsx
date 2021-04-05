@@ -23,6 +23,10 @@ var usePrefs = true;
 var prefOne = 0;
 var prefTwo = 1;
 
+var appendixPages = -1;
+var currentAppendix = null;
+var appendixNumber = 0;
+
 
 // Look for and read prefs file
 prefsFile = File((Folder(app.activeScript)).parent + "/testprefs.txt");
@@ -41,7 +45,7 @@ if(app.documents.length == 0)
     alert("No document open")
     exit(1)
 }
-var theDoc = app.activeDocument;
+theDoc = app.activeDocument;
 // Save zero point for later restoration
 var oldZero = theDoc.zeroPoint;
 // set the zero point to the origin
@@ -52,15 +56,23 @@ var oldRulerOrigin = theDoc.viewPreferences.rulerOrigin;
 theDoc.viewPreferences.rulerOrigin = RulerOrigin.pageOrigin;
 
 // Check retrieving path of open Document
-alert(theDoc.fullName.name);
-alert(theDoc.filePath.fsName);
+docName = theDoc.fullName.fsName;
+docName = docName.substr(0,docName.lastIndexOf("."));
+//alert(docName);
+//alert(theDoc.fullName.fsName);
+//alert(theDoc.filePath.fsName);
+var nummm = 0;
+
+var theBook =  app.activeBook;
 
 // Check connecting to a socket and reaading something
 var tcp = new Socket;
 ok = tcp.open("127.0.0.1:2099")
 tcp.writeln("DEST: "+theDoc.filePath.fsName)
 recv = tcp.readln()
-alert(recv + "(" + tcp.error + ")")
+if (recv !== "OK"){
+    alert(recv + "(" + tcp.error + ")")
+}
 //tcp.close()
 
 function progress(steps) {
@@ -92,6 +104,9 @@ function progress(steps) {
 }
 
 // Start experiments...
+addFileToAppendix("test");
+exit();
+
 if (false) {
     len = theDoc.hyperlinkTextSources.length;
     progress(5);
@@ -218,4 +233,17 @@ function throwError(msg, pdfError, idNum, fileToClose)
 		alert("ERROR: " + msg + " (" + idNum + ")", "MultiPageImporter Script Error");
 		exit(idNum);
 	}
+}
+
+
+function addFileToAppendix(name){
+    if (currentAppendix == null){
+        currentAppendix = app.open(File("/Users/timo/Documents/empty-memo.indt"),false);
+        appendixName = docName + "-app" + appendixNumber.toString() + ".indd";
+        appendixNumber++;
+        f = new File(appendixName);
+        currentAppendix.save(f);
+        theBook.bookContents.add(f)
+        currentAppendix.windows.add();
+    }
 }
