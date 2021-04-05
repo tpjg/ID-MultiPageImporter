@@ -164,8 +164,8 @@ for (var i=0;i<len;i++){
             alert(recv + "(" + tcp.error + ")")
         }
     }
-    $.sleep(200);
-    if (i > 2) {
+    //$.sleep(200);
+    if (i > 50) {
         exit();
     }
 }
@@ -178,16 +178,23 @@ function openFileAndPlaceIt(recv){
     progress.message(theFileToBePlaced.name);
 
     // In "production" single UNDO, in Debug just run it ...
-    if (true){
+    if (false){
         app.doScript(internalPlaceIt, ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "Place " + fileNameToBePlaced);
     } else {
         internalPlaceIt();
     }
     theFileToBePlaced.close();
 
-    currentAppendix.pages.add(LocationOptions.AT_END);
-    docStartPG = currentAppendix.pages.length;
-
+    // Split appendices into documents of at most a certain number of pages
+    if (currentAppendix.pages.length < 50){
+        currentAppendix.pages.add(LocationOptions.AT_END);
+        docStartPG = currentAppendix.pages.length;
+    } else {
+        currentAppendix.save();
+        currentAppendix = null;
+        addFileToAppendix();
+        docStartPG = 1;
+    }
     //currentAppendix.windows.add(); // Unhide hidden window
 }
 
@@ -202,7 +209,7 @@ function addFileToAppendix(){
         appendixNumber++;
         f = new File(appendixName);
         currentAppendix.save(f);
-        //theBook.bookContents.add(f)
+        theBook.bookContents.add(f)
     }
 }
 
@@ -501,7 +508,7 @@ else if(reverseOrder && noPDFError)
 }
 else
 {
-	addPages(placementINFO, lastPageNumber, docWidth, docHeight, docStartPG, startPG, endPG, theFile);
+	addPages(placementINFO, docWidth, docHeight, docStartPG, startPG, endPG, theFile);
 }
 
 // Kill the Object style
@@ -514,7 +521,7 @@ return;
 
 
 // Place the requested pages in the document
-function addPages(placementINFO, lastPageNumber, docWidth, docHeight, docStartPG, startPG, endPG, theFile)
+function addPages(placementINFO, docWidth, docHeight, docStartPG, startPG, endPG, theFile)
 {
 	var currentPDFPg = 0;
 	var firstTime = true;
@@ -537,14 +544,14 @@ function addPages(placementINFO, lastPageNumber, docWidth, docHeight, docStartPG
 			app.importedPageAttributes.pageNumber = currentInputDocPg;
 		}
 
-		if(i > (lastPageNumber-1))
+		if(i > (currentAppendix.pages.length-1))
 		{
 			// Make sure we have a page to insert into
 			currentAppendix.pages.add(LocationOptions.AT_END);
 			addedAPage = true;
 		}
 	
-		var margins = currentAppendix.pages[i].marginPreferences; //currentAppendix.pages.itemByName(String(i+1)).marginPreferences;
+		var margins = currentAppendix.pages[i].marginPreferences;
 
 		var bounds = [margins.top, margins.left, docHeight-margins.bottom, docWidth-margins.right]; //[0,0,20,20];
 		if (fitMargin){
@@ -684,6 +691,7 @@ function addPages(placementINFO, lastPageNumber, docWidth, docHeight, docStartPG
 		TB.remove();
 	
 		firstTime = false;
+        addedAPage = false;
 	}
 }
 
