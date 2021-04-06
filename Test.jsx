@@ -21,6 +21,8 @@ else
 var appendixPages = -1;
 var currentAppendix = null;
 var appendixNumber = 0;
+// Keep track of latest added appendix textpoint
+var returnTextPoint;
 
 // Stuff that MultiPageImporter defines globally
 var docStartPG = 1;
@@ -30,12 +32,7 @@ var cropType = 0;
 var PDF_DOC = "PDF";
 var IND_DOC = "InDesign";
 var tempObjStyle = null;
-var dLog; // Kludge for callback function that uses the dLog, but can't be given the dLog directly
-var ddArray;
-var ddIndexArray;
-var numArray;
-var getout;
-var doMapCheck = true;
+//var getout;
 var rotateValues = [0,90,180,270];
 var positionValuesAll = ["Top left", "Top center", "Top right", "Center left",  "Center", "Center right", "Bottom left",  "Bottom center",  "Bottom right"];
 var noPDFError = true;
@@ -103,11 +100,11 @@ function progress(steps) {
 
     w = new Window("palette", "Progress", undefined, {closeButton: false});
     t = w.add("statictext");
-    t.preferredSize = [450, -1]; // 450 pixels wide, default height.
+    t.preferredSize = [600, -1]; // 450 pixels wide, default height.
 
     if (steps) {
         b = w.add("progressbar", undefined, 0, steps);
-        b.preferredSize = [450, -1]; // 450 pixels wide, default height.
+        b.preferredSize = [600, -1]; // 450 pixels wide, default height.
     }
 
     progress.close = function () {
@@ -131,7 +128,7 @@ if (false) {
     len = theDoc.hyperlinkTextSources.length;
     progress(5);
     //alert("test: " + len + "textsources");
-    for (var i=0;i<len;i++){
+    for (i=0;i<len;i++){
         ts = theDoc.hyperlinkTextSources[i];
         progress.message("ts: " + ts.sourceText.contents + " < " + ts.parent + " ( " + ts.name);
         progress.increment();
@@ -149,8 +146,8 @@ addFileToAppendix();
 
 len = theDoc.hyperlinks.length
 progress(len)
-for (var i=0;i<len;i++){ 
-    link = theDoc.hyperlinks[i];
+for (mi=0;mi<len;mi++){ 
+    link = theDoc.hyperlinks[mi];
     progress.message("link: " + link.source.sourceText.contents);
     progress.increment();
     if (link.destination instanceof HyperlinkURLDestination) {
@@ -159,23 +156,52 @@ for (var i=0;i<len;i++){
         recv = tcp.readln()
         if (recv.substr(0,6) === "FILE: "){
             progress.message(recv)
+
+            existingDest = getExistingHyperlinkTextDestination(theDoc,recv);
+            if ((existingDest != null)){ //} && (existingDest.name === recv)){
+                progress.message(recv + "already exists");
+                setLinkProperties(link, existingDest);
+                continue;
+            }
             openFileAndPlaceIt(recv)
+            if ((true) && (returnTextPoint)) {
+                newDestination = theDoc.hyperlinkTextDestinations.add(returnTextPoint);
+                newDestination.name = recv;
+                setLinkProperties(link, newDestination);
+                returnTextPoint = null;
+            }
         } else {
             alert(recv + "(" + tcp.error + ")")
         }
     }
-    //$.sleep(200);
-    if (i > 50) {
-        exit();
-    }
 }
+
+function getExistingHyperlinkTextDestination(theDoc, recv){
+    for (j=0; j<theDoc.hyperlinks.length; j++){
+        if (theDoc.hyperlinks[j].destination instanceof HyperlinkTextDestination){
+            if (theDoc.hyperlinks[j].destination.name === recv){
+                return theDoc.hyperlinks[j].destination;
+            }
+        }
+    }
+    return null;
+}
+
+function setLinkProperties(link, newDestination){
+    link.destination = newDestination;
+    link.borderColor = UIColors.LIGHT_BLUE;
+    link.borderStyle = HyperlinkAppearanceStyle.SOLID;
+    link.width = HyperlinkAppearanceWidth.MEDIUM;
+    link.highlight = HyperlinkAppearanceHighlight.OUTLINE;
+}
+
 
 var theFileToBePlaced;
 
 function openFileAndPlaceIt(recv){
     fileNameToBePlaced = recv.substr(6);
     theFileToBePlaced = new File(fileNameToBePlaced);
-    progress.message(theFileToBePlaced.name);
+    progress.message("Placing " + File.decode(theFileToBePlaced.name));
 
     // In "production" single UNDO, in Debug just run it ...
     if (false){
@@ -393,7 +419,11 @@ if(ignoreErrors)
 
 // Create the Object Style to be applied to the placed pages.
 tempObjStyle = currentAppendix.objectStyles.add();
-tempObjStyle.name = "MultiPageImporter_Styler_" + Math.round(Math.random() * 9999);
+styleName = "MultiPageImporter_Styler_" + Math.round(Math.random() * 9999);
+for (ti=0; (currentAppendix.objectStyles.itemByName(styleName) != null) || ti>10; ti++){
+    styleName = "MultiPageImporter_Styler_" + Math.round(Math.random() * 9999);
+}
+tempObjStyle.name =  styleName;
 tempObjStyle.strokeWeight = 0; // Make sure there's no stroke
 tempObjStyle.fillColor = "None"; // Make sure fill is none
 tempObjStyle.enableAnchoredObjectOptions = true;
@@ -485,31 +515,8 @@ switch(positionType)
 		break;
 }
 
-// Add the pages to the doc based on normal or mapping pages
-if(mapPages && noPDFError)
-{
-	for(pdfPG = startPG; pdfPG <= endPG; pdfPG++)
-	{	
-		i = ddArray[pdfPG%docPgCount].selection.text;
-		if(i == "skip")
-		{
-			continue;
-		}
-		addPages(Number(i), pdfPG, pdfPG); 
-	}
-}
-else if(reverseOrder && noPDFError)
-{
-	for(reverse = endPG; reverse >= startPG; reverse--)
-	{
-		addPages(docStartPG, reverse, reverse);
-		docStartPG++;
-	}
-}
-else
-{
-	addPages(placementINFO, docWidth, docHeight, docStartPG, startPG, endPG, theFile);
-}
+addPages(placementINFO, docWidth, docHeight, docStartPG, startPG, endPG, theFile);
+
 
 // Kill the Object style
 tempObjStyle.remove();
@@ -582,6 +589,7 @@ function addPages(placementINFO, docWidth, docHeight, docStartPG, startPG, endPG
 				//At this point, the variable myParagraphStyle contains a reference to a paragraph 
 				//style object, which you can now use to specify formatting.
 				myTextFrame.parentStory.texts.item(0).applyParagraphStyle(myParagraphStyle, true);
+                returnTextPoint = myTextFrame.insertionPoints.firstItem();
 				// Start new section
 				try {
 				var newSection = currentAppendix.sections.add (currentAppendix.pages[i]);
@@ -1225,27 +1233,6 @@ function getPageSize(theFile)
 	ret["height"] = isRotated ? xSize : ySize;
 
 	return ret;
-}
-
-// Error function
-function throwError(msg, pdfError, idNum, fileToClose)
-{	
-
-	if(fileToClose != null)
-	{
-		fileToClose.close();
-	}
-	
-	if(pdfError)
-	{
-		// Throw err to be able to turn page numbering off
-		throw Error("dummy");
-	}
-	else
-	{
-		alert("ERROR: " + msg + " (" + idNum + ")", "MultiPageImporter Script Error");
-		exit(idNum);
-	}
 }
 
 // Extract info from the document being placed
