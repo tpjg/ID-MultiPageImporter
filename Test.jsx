@@ -100,11 +100,15 @@ function progress(steps) {
 
     w = new Window("palette", "Progress", undefined, {closeButton: false});
     t = w.add("statictext");
-    t.preferredSize = [600, -1]; // 450 pixels wide, default height.
+    t.preferredSize = [600, -1]; // default height.
+    tsub1 = w.add("statictext");
+    tsub1.preferredSize = [600, -1];
+    tsub2 = w.add("statictext");
+    tsub2.preferredSize = [600, -1];
 
     if (steps) {
         b = w.add("progressbar", undefined, 0, steps);
-        b.preferredSize = [600, -1]; // 450 pixels wide, default height.
+        b.preferredSize = [600, -1]; // default height.
     }
 
     progress.close = function () {
@@ -117,30 +121,22 @@ function progress(steps) {
 
     progress.message = function (message) {
         t.text = message;
+        tsub1.text = "";
+        tsub2.text = "";
+    };
 
+    progress.msgSub1 = function (message) {
+        tsub1.text = message;
+    };
+
+    progress.msgSub2 = function (message) {
+        tsub2.text = message;
     };
 
     w.show();
 }
 
 // Start experiments...
-if (false) {
-    len = theDoc.hyperlinkTextSources.length;
-    progress(5);
-    //alert("test: " + len + "textsources");
-    for (i=0;i<len;i++){
-        ts = theDoc.hyperlinkTextSources[i];
-        progress.message("ts: " + ts.sourceText.contents + " < " + ts.parent + " ( " + ts.name);
-        progress.increment();
-        //alert("ts: " + ts.sourceText.contents + " < " + ts.parent + " ( " + ts.name);
-        $.sleep(1000);
-        //break;
-        if (i==3) {
-            alert("exiting")
-            exit();
-        }
-    }
-}
 
 addFileToAppendix();
 
@@ -148,14 +144,14 @@ len = theDoc.hyperlinks.length
 progress(len)
 for (mi=0;mi<len;mi++){ 
     link = theDoc.hyperlinks[mi];
-    progress.message("link: " + link.source.sourceText.contents);
+    progress.message("Link: " + link.source.sourceText.contents);
     progress.increment();
     if (link.destination instanceof HyperlinkURLDestination) {
-        progress.message("URL: " + link.destination.destinationURL)
+        progress.msgSub1("URL: " + link.destination.destinationURL)
         tcp.writeln("FETCH: " + link.destination.destinationURL)
         recv = tcp.readln()
         if (recv.substr(0,6) === "FILE: "){
-            progress.message(recv)
+            progress.msgSub2(recv)
 
             existingDest = getExistingHyperlinkTextDestination(theDoc,recv);
             if ((existingDest != null)){ //} && (existingDest.name === recv)){
@@ -193,6 +189,7 @@ function setLinkProperties(link, newDestination){
     link.borderStyle = HyperlinkAppearanceStyle.SOLID;
     link.width = HyperlinkAppearanceWidth.MEDIUM;
     link.highlight = HyperlinkAppearanceHighlight.OUTLINE;
+    link.visible = true;
 }
 
 
@@ -201,7 +198,7 @@ var theFileToBePlaced;
 function openFileAndPlaceIt(recv){
     fileNameToBePlaced = recv.substr(6);
     theFileToBePlaced = new File(fileNameToBePlaced);
-    progress.message("Placing " + File.decode(theFileToBePlaced.name));
+    progress.msgSub2("Placing " + File.decode(theFileToBePlaced.name));
 
     // In "production" single UNDO, in Debug just run it ...
     if (false){
