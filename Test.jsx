@@ -16,6 +16,8 @@ else
 	exit(-1);
 }
 
+logf = File((Folder(app.activeScript)).parent + "/Test_log.txt");
+logf.open("w");
 
 // Stuff to keep track of appendices
 var appendixPages = -1;
@@ -147,6 +149,10 @@ for (mi=0;mi<len;mi++){
     progress.message("Link: " + link.source.sourceText.contents);
     progress.increment();
     if (link.destination instanceof HyperlinkURLDestination) {
+		if (link.destination.destinationURL.substr(0,29) != "https://drive.google.com/file") {
+			logf.write("skipping "+ link.destination.destinationURL + "\n");
+			continue;
+		}
         progress.msgSub1("URL: " + link.destination.destinationURL)
         tcp.writeln("FETCH: " + link.destination.destinationURL)
         recv = tcp.readln()
@@ -167,7 +173,7 @@ for (mi=0;mi<len;mi++){
                 returnTextPoint = null;
             }
         } else {
-            alert(recv + "(" + tcp.error + ")")
+			logf.write(recv + "(" + tcp.error + ")\n");
         }
     }
 }
@@ -201,7 +207,7 @@ function openFileAndPlaceIt(recv){
     progress.msgSub2("Placing " + File.decode(theFileToBePlaced.name));
 
     // In "production" single UNDO, in Debug just run it ...
-    if (false){
+    if (true){
         app.doScript(internalPlaceIt, ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "Place " + fileNameToBePlaced);
     } else {
         internalPlaceIt();
@@ -235,6 +241,8 @@ function addFileToAppendix(){
         theBook.bookContents.add(f)
     }
 }
+
+logf.close();
 
 // Save prefs and then restore original app/doc settings
 restoreDefaults(true);
@@ -295,6 +303,7 @@ if (theFile == null)
 // Check if a file other than PDF or InDesign chosen
 else if((theFile.name.toLowerCase().indexOf(".pdf") == -1 && theFile.name.toLowerCase().indexOf(".ind") == -1 && theFile.name.toLowerCase().indexOf(".ai") == -1 ))
 {
+	logf.write("Only placing PDFs - skipping " + theFile.name + "\n");
     return;
 	throwError("A PDF, PDF compatible AI or InDesign file must be chosen. Quitting...", false, 1, null);
 }
