@@ -16,8 +16,9 @@ else
 	exit(-1);
 }
 
-logf = File((Folder(app.activeScript)).parent + "/Test_log.txt");
-logf.open("w");
+logFile =  File((Folder(app.activeScript)).parent + "/Test_log.txt");
+logFile.encoding = "UTF-8";
+logFile.open("w");
 
 // Stuff to keep track of appendices
 var appendixPages = -1;
@@ -147,14 +148,16 @@ progress(len)
 for (mi=0;mi<len;mi++){ 
     link = theDoc.hyperlinks[mi];
     progress.message("Link: " + link.source.sourceText.contents);
+	logFile.writeln("Link: " + link.source.sourceText.contents);
     progress.increment();
     if (link.destination instanceof HyperlinkURLDestination) {
 		if (link.destination.destinationURL.substr(0,29) != "https://drive.google.com/file") {
-			logf.write("skipping "+ link.destination.destinationURL + "\n");
+			logFile.writeln("skipping "+ link.destination.destinationURL);
 			continue;
 		}
-        progress.msgSub1("URL: " + link.destination.destinationURL)
-        tcp.writeln("FETCH: " + link.destination.destinationURL)
+        progress.msgSub1("URL: " + link.destination.destinationURL);
+		logFile.writeln("URL: " + link.destination.destinationURL);
+        tcp.writeln("FETCH: " + link.destination.destinationURL);
         recv = tcp.readln()
         if (recv.substr(0,6) === "FILE: "){
             progress.msgSub2(recv)
@@ -171,9 +174,11 @@ for (mi=0;mi<len;mi++){
                 newDestination.name = recv;
                 setLinkProperties(link, newDestination);
                 returnTextPoint = null;
-            }
+            } else {
+				logFile.writeln("Not changing link: " + link.source.sourceText.contents);
+			}
         } else {
-			logf.write(recv + "(" + tcp.error + ")\n");
+			logFile.writeln(recv + "(" + tcp.error + ") trying to place " + link.source.sourceText.contents);
         }
     }
 }
@@ -242,7 +247,7 @@ function addFileToAppendix(){
     }
 }
 
-logf.close();
+logFile.close();
 
 // Save prefs and then restore original app/doc settings
 restoreDefaults(true);
@@ -303,7 +308,7 @@ if (theFile == null)
 // Check if a file other than PDF or InDesign chosen
 else if((theFile.name.toLowerCase().indexOf(".pdf") == -1 && theFile.name.toLowerCase().indexOf(".ind") == -1 && theFile.name.toLowerCase().indexOf(".ai") == -1 ))
 {
-	logf.write("Only placing PDFs - skipping " + theFile.name + "\n");
+	logFile.writeln("Only placing PDFs - skipping " + theFile.name);
     return;
 	throwError("A PDF, PDF compatible AI or InDesign file must be chosen. Quitting...", false, 1, null);
 }
