@@ -148,7 +148,7 @@ progress(len)
 for (mi=0;mi<len;mi++){ 
     link = theDoc.hyperlinks[mi];
     progress.message("Link: " + link.source.sourceText.contents);
-	logFile.writeln("Link: " + link.source.sourceText.contents);
+	logFile.writeln("\nLink: " + link.source.sourceText.contents);
     progress.increment();
     if (link.destination instanceof HyperlinkURLDestination) {
 		if (link.destination.destinationURL.substr(0,29) != "https://drive.google.com/file") {
