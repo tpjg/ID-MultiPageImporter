@@ -208,6 +208,7 @@ var theFileToBePlaced;
 
 function openFileAndPlaceIt(recv){
     fileNameToBePlaced = recv.substr(6);
+	logFile.writeln("Placing " + fileNameToBePlaced);
     theFileToBePlaced = new File(fileNameToBePlaced);
     progress.msgSub2("Placing " + File.decode(theFileToBePlaced.name));
 
